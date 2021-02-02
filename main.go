@@ -304,9 +304,7 @@ func main() {
 		c.JSON(200, retVal)
 	})
 
-	// Assume running on Heroku. Grab the appropriate port
-	prt := os.Getenv("PORT")
-	log.Printf("INFO: starting web server on port: %v\n", prt)
+	log.Printf("INFO: starting web server on port: %v\n", 8999)
 
-	r.Run(fmt.Sprintf(":%v", prt))
+	r.Run(fmt.Sprintf(":%v", 8999))
 }
