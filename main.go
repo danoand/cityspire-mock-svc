@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
