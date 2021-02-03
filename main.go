@@ -205,10 +205,24 @@ var cityCodeMap = map[string]int{
 	"Olathe":           0,
 	"Waco":             0}
 
-//RetStruct models the return object for each request
-type RetStruct struct {
-	Msg   string `json:"msg"`
-	Score int    `json:"score"`
+// RetStructAvgRent models the return object for each request
+type RetStructAvgRent struct {
+	Msg     string      `json:"msg"`
+	Score   interface{} `json:"score"`
+	AvgRent interface{} `json:"avg_rent"`
+}
+
+// RetStructWalk models the return object for each request
+type RetStructWalk struct {
+	Msg      string      `json:"msg"`
+	Score    interface{} `json:"score"`
+	RawScore interface{} `json:"raw_score"`
+}
+
+// RetStructGeneric models the return object for each request
+type RetStructGeneric struct {
+	Msg   string      `json:"msg"`
+	Score interface{} `json:"score"`
 }
 
 func main() {
@@ -218,71 +232,20 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.GET("/crime_scr/:city", func(c *gin.Context) {
-		var ok bool
-		var city string
-		var retVal RetStruct
-		var tmpScr int
-
-		// Extract city parameter
-		city = c.Param("city")
-		if len(city) == 0 {
-			retVal.Msg = "missing city parameter"
-			c.JSON(http.StatusBadRequest, retVal)
-			return
-		}
-
-		// Lookup the city code
-		tmpScr, ok = cityCodeMap[city]
-		if !ok {
-			// city code not found
-			retVal.Msg = "city not found"
-			c.JSON(http.StatusNotFound, retVal)
-			return
-		}
-
-		retVal.Msg = "crime score"
-		retVal.Score = tmpScr
-		c.JSON(200, retVal)
-	})
-
-	r.GET("/walk_scr/:city", func(c *gin.Context) {
-		var ok bool
-		var city string
-		var retVal RetStruct
-		var tmpScr int
-
-		// Extract city parameter
-		city = c.Param("city")
-		if len(city) == 0 {
-			retVal.Msg = "missing city parameter"
-			c.JSON(http.StatusBadRequest, retVal)
-			return
-		}
-
-		// Lookup the city code
-		tmpScr, ok = cityCodeMap[city]
-		if !ok {
-			// city code not found
-			retVal.Msg = "city not found"
-			c.JSON(http.StatusNotFound, retVal)
-			return
-		}
-
-		retVal.Msg = "walkability score"
-		retVal.Score = tmpScr
-		c.JSON(200, retVal)
-	})
 
 	r.GET("/rent_avg/:city", func(c *gin.Context) {
-		var ok bool
-		var city string
-		var retVal RetStruct
+		var (
+			ok     bool
+			city   string
+			retVal RetStructAvgRent
+		)
 
 		// Extract city parameter
 		city = c.Param("city")
 		if len(city) == 0 {
 			retVal.Msg = "missing city parameter"
+			retVal.Score = nil
+			retVal.AvgRent = nil
 			c.JSON(http.StatusBadRequest, retVal)
 			return
 		}
@@ -292,14 +255,144 @@ func main() {
 		if !ok {
 			// city code not found
 			retVal.Msg = "city not found"
+			retVal.Score = nil
+			retVal.AvgRent = nil
 			c.JSON(http.StatusNotFound, retVal)
 			return
 		}
 
 		retVal.Msg = "average rent"
+		retVal.Score = rand.Intn(5) + 1
 		max := 3000
 		min := 1500
-		retVal.Score = rand.Intn(max-min) + min
+		retVal.AvgRent = rand.Intn(max-min) + min
+		c.JSON(200, retVal)
+	})
+
+	r.GET("/walk_scr/:city", func(c *gin.Context) {
+		var (
+			ok     bool
+			city   string
+			retVal RetStructWalk
+		)
+
+		// Extract city parameter
+		city = c.Param("city")
+		if len(city) == 0 {
+			retVal.Msg = "missing city parameter"
+			retVal.Score = nil
+			retVal.RawScore = nil
+			c.JSON(http.StatusBadRequest, retVal)
+			return
+		}
+
+		// Lookup the city code
+		_, ok = cityCodeMap[city]
+		if !ok {
+			// city code not found
+			retVal.Msg = "city not found"
+			retVal.Score = nil
+			retVal.RawScore = nil
+			c.JSON(http.StatusNotFound, retVal)
+			return
+		}
+
+		retVal.Msg = "walkability score"
+		retVal.Score = rand.Intn(5) + 1
+		retVal.RawScore = rand.Intn(100) + 1
+		c.JSON(200, retVal)
+	})
+
+	r.GET("/crime_scr/:city", func(c *gin.Context) {
+		var (
+			ok     bool
+			city   string
+			retVal RetStructGeneric
+		)
+
+		// Extract city parameter
+		city = c.Param("city")
+		if len(city) == 0 {
+			retVal.Msg = "missing city parameter"
+			retVal.Score = nil
+			c.JSON(http.StatusBadRequest, retVal)
+			return
+		}
+
+		// Lookup the city code
+		_, ok = cityCodeMap[city]
+		if !ok {
+			// city code not found
+			retVal.Msg = "city not found"
+			retVal.Score = nil
+			c.JSON(http.StatusNotFound, retVal)
+			return
+		}
+
+		retVal.Msg = "crime score"
+		retVal.Score = rand.Intn(5) + 1
+		c.JSON(200, retVal)
+	})
+
+	r.GET("/air_qual_scr/:city", func(c *gin.Context) {
+		var (
+			ok     bool
+			city   string
+			retVal RetStructGeneric
+		)
+
+		// Extract city parameter
+		city = c.Param("city")
+		if len(city) == 0 {
+			retVal.Msg = "missing city parameter"
+			retVal.Score = nil
+			c.JSON(http.StatusBadRequest, retVal)
+			return
+		}
+
+		// Lookup the city code
+		_, ok = cityCodeMap[city]
+		if !ok {
+			// city code not found
+			retVal.Msg = "city not found"
+			retVal.Score = nil
+			c.JSON(http.StatusNotFound, retVal)
+			return
+		}
+
+		retVal.Msg = "air quality score"
+		retVal.Score = rand.Intn(5) + 1
+		c.JSON(200, retVal)
+	})
+
+	r.GET("/city_scr/:city", func(c *gin.Context) {
+		var (
+			ok     bool
+			city   string
+			retVal RetStructGeneric
+		)
+
+		// Extract city parameter
+		city = c.Param("city")
+		if len(city) == 0 {
+			retVal.Msg = "missing city parameter"
+			retVal.Score = nil
+			c.JSON(http.StatusBadRequest, retVal)
+			return
+		}
+
+		// Lookup the city code
+		_, ok = cityCodeMap[city]
+		if !ok {
+			// city code not found
+			retVal.Msg = "city not found"
+			retVal.Score = nil
+			c.JSON(http.StatusNotFound, retVal)
+			return
+		}
+
+		retVal.Msg = "overall quality of life score"
+		retVal.Score = rand.Intn(5) + 1
 		c.JSON(200, retVal)
 	})
 
