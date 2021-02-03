@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 
+	"github.com/danoand/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -226,12 +229,68 @@ type RetStructGeneric struct {
 }
 
 func main() {
+	var err error
+	var fle *os.File
+	var tmpRows [][]string
+	var slcCities []interface{}
+	var cols []string
+
 	// Iterate through the city map and generate random values
 	for key := range cityCodeMap {
 		cityCodeMap[key] = rand.Intn(5) + 1
 	}
 
+	// Read city csv data
+	log.Printf("INFO: reading in list of supported cities")
+	fle, err = os.Open("city_list.csv")
+	if err != nil {
+		// error opening up the cities file
+		log.Fatalf("FATAL: %v - error opening up the cities file - see: %v\n",
+			utils.FileLine(),
+			err)
+	}
+
+	// Set up a csv reader used to read csv data
+	rdr := csv.NewReader(fle)
+
+	// Read in all of the csv data
+	rdr.FieldsPerRecord = 4
+	tmpRows, err = rdr.ReadAll()
+	if err != nil {
+		// error reading in the csv file data
+		log.Fatalf("FATAL: %v - error reading in the csv file data - see: %v\n",
+			utils.FileLine(),
+			err)
+	}
+
+	// Iterate through the read csv data and
+	//   construct a slice of city maps
+	for i := 0; i < len(tmpRows); i++ {
+		var tmpMap = make(map[string]string)
+
+		if i == 0 {
+			// iterating over the column "headers"
+			cols = tmpRows[i]
+			continue
+		}
+
+		// iterating over a data row
+		tmpMap[cols[0]] = tmpRows[i][0]
+		tmpMap[cols[1]] = tmpRows[i][1]
+		tmpMap[cols[2]] = tmpRows[i][2]
+		tmpMap[cols[3]] = tmpRows[i][3]
+
+		// apend the map of city data to our running slice of cities
+		slcCities = append(slcCities, tmpMap)
+	}
+	log.Printf("INFO: finished processing the list of supported cities")
+
 	r := gin.Default()
+
+	// Return an array of officially supported cities
+	r.GET("/cities", func(c *gin.Context) {
+		c.JSON(200, slcCities)
+	})
 
 	r.GET("/rent_avg/:city", func(c *gin.Context) {
 		var (
